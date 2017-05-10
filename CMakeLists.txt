@@ -11,8 +11,52 @@ include(ShaderFiles.cmake)
 ############################FIND PACKAGE##################
 include_directories(${CMAKE_SOURCE_DIR}/common)
 
+set(DEPENDENCIES "")
+
 #glfw
-find_package(GLFW REQUIRED)
+find_package(GLFW QUIET)
+if (GLFW_FOUND)
+	set(_DOWNLOAD_GLFW OFF)
+else()
+	set(_DOWNLOAD_GLFW ON)
+endif()
+set(DOWNLOAD_GLFW ${_DOWNLOAD_GLFW} CACHE BOOL "Always download git from github repo. Uncheck, if you want to an external installation.")
+if (${DOWNLOAD_GLFW})
+	message("prepare glfw from git")
+	include(ExternalProject)
+	#include(LibFindMacros)
+	
+	message(${CMAKE_BINARY_DIR})
+	set(GLFW_INSTALL_DIR "${CMAKE_BINARY_DIR}/libs/glfw")
+	ExternalProject_Add(
+		glfw
+		GIT_REPOSITORY https://github.com/glfw/glfw
+		UPDATE_COMMAND ""
+		CMAKE_ARGS 	-DCMAKE_INSTALL_PREFIX=${GLFW_INSTALL_DIR}
+					-DGLFW_BUILD_EXAMPLES=OFF
+					-DGLFW_BUILD_TESTS=OFF
+					-DGLFW_BUILD_DOCS=OFF
+					-DGLFW_INSTALL=ON
+					-DBUILD_SHARED_LIBS=OFF
+		CMAKE_CACHE_ARGS
+            "-DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}"
+            "-DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}"
+		LOG_DOWNLOAD ON
+		LOG_INSTALL OFF
+    )
+    
+	set(GLFW_LIB_DIR "${GLFW_INSTALL_DIR}/lib")
+	set(GLFW_INCLUDE_DIR "${GLFW_INSTALL_DIR}/include")
+	
+	
+	link_directories("${GLFW_INSTALL_DIR}/lib/") #workaround: idk why, but the path is not added when encoded in GLFW_LIBRARIES
+	set(GLFW_LIBRARIES "glfw3.lib") #todo: more general name
+	list(APPEND DEPENDENCIES glfw)
+	
+	#include(git)
+	#find_package(GIT)
+	#execute_process()
+endif()
 
 #glew
 #find_package(GLEW REQUIRED)
@@ -77,27 +121,30 @@ endforeach()
 
 
 add_executable(${EXECUTABLE_NAME} ${sources} ${shaders} ${ShaderCollectionFileName})
+add_dependencies(${EXECUTABLE_NAME} ${DEPENDENCIES})
 group_target_sources(${EXECUTABLE_NAME})
 ######################LINK LIBS#########################
 #boost
-include_directories(${Boost_INCLUDE_DIR})
+target_include_directories(${EXECUTABLE_NAME} PUBLIC ${Boost_INCLUDE_DIR})
 target_link_libraries( ${EXECUTABLE_NAME} ${Boost_LIBRARIES} )
 
 #glfw
-include_directories(${GLFW_INCLUDE_DIR})
+message(${GLFW_INCLUDE_DIR})
+target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${GLFW_INCLUDE_DIR})
 add_definitions(-DTIME_MEASURE)
-target_link_libraries( ${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
+message(${GLFW_LIBRARIES})
+target_link_libraries(${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
 
 #anttweakbar
 if(${ANTTWEAKBAR_ON})
-	include_directories(${ANTTWEAKBAR_INCLUDE_PATH})
+	target_include_directories(${EXECUTABLE_NAME} PUBLIC ${ANTTWEAKBAR_INCLUDE_PATH})
 	target_link_libraries(${EXECUTABLE_NAME} ${ANTTWEAKBAR_LIBRARY})
 	set_target_properties(${EXECUTABLE_NAME} PROPERTIES COMPILE_DEFINITIONS $<$<CONFIG:Debug>:USE_ANTTWEAKBAR>)
 endif(${ANTTWEAKBAR_ON})
 
 #kinect
 if(${USE_KINECTSDK})
-    include_directories(${KinectSDK_INCLUDE_PATH})
+    target_include_directories(${EXECUTABLE_NAME} PUBLIC ${KinectSDK_INCLUDE_PATH})
     target_link_libraries(${EXECUTABLE_NAME} ${KinectSDK_LIBRARY})
     add_definitions(-DUSE_KINECTSDK)
     add_definitions(-DKINECT_SDK_VERSION=${KinectSDK_MAJOR_VERSION})
