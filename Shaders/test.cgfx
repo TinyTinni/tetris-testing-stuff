@@ -1,0 +1,50 @@
+// This is C2E1v_green from "The Cg Tutorial" (Addison-Wesley, ISBN
+// 0321194969) by Randima Fernando and Mark J. Kilgard.  See page 38.
+
+struct VertexIN
+{
+	float2 position : POSITION;
+};
+
+struct VertexOut 
+{
+  float4 position : POSITION;
+  float4 color    : COLOR;
+};
+
+VertexOut vmain(float2 position : POSITION, uniform float4x4 modelViewProj)
+{	
+  VertexOut OUT;
+
+  OUT.position = float4(position,0.0,1.0);//mul(modelViewProj,float4(IN.position,-1.0,1.0));
+  OUT.color = float4(0.0,1.0,0.0,1.0);
+
+  return OUT;	
+}
+
+//////////////////////////////////////////////////////////
+
+struct PixelIN
+{
+	float4 color: COLOR;
+};
+
+float4 pmain(PixelIN IN) : COLOR
+{
+	return IN.color;
+}
+
+//////////////////////////////////////////////////////////
+
+float4x4 modelViewProjectionMatrix;
+
+technique test
+{
+    pass
+    {
+        VertexProgram   = compile glslv vmain(modelViewProjectionMatrix);
+        FragmentProgram = compile glslf pmain();
+    }
+}
+
+

@@ -1,0 +1,15 @@
+#version 330 core
+
+layout(location = 0) in vec2 position;
+layout(location = 1) in vec2 texCoords;
+
+uniform uint uWindowWidth;
+uniform uint uWindowHeight;
+
+out vec2 vTexCoords;
+
+void main()
+{
+	gl_Position = vec4(position.x/uWindowWidth-1.0, 1.0-position.y/uWindowHeight, 1.0, 1.0);
+	vTexCoords = texCoords;
+}

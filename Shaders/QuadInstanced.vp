@@ -1,0 +1,24 @@
+#version 330 core
+
+layout(location = 0) in vec3 position;
+
+uniform mat4 uProjection;
+uniform mat4 uModelMatrix;
+
+uniform samplerBuffer textureBuffer;
+
+const float size = 0.05;
+
+out vec4 vColor;
+
+void main()
+{
+    vec3 tposition = texelFetch(textureBuffer, 2*gl_InstanceID).xyz;
+    vec4 color = texelFetch(textureBuffer, 2*gl_InstanceID + 1)*vec4(position.z);
+
+	tposition += size*position;
+
+	tposition.z = -2;
+	gl_Position = uProjection*uModelMatrix*vec4(tposition,1.0);    
+	vColor = color;
+}
