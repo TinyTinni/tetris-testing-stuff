@@ -132,7 +132,6 @@ target_link_libraries( ${EXECUTABLE_NAME} ${Boost_LIBRARIES} )
 message(${GLFW_INCLUDE_DIR})
 target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${GLFW_INCLUDE_DIR})
 add_definitions(-DTIME_MEASURE)
-message(${GLFW_LIBRARIES})
 target_link_libraries(${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
 
 #anttweakbar
